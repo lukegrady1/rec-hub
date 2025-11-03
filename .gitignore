@@ -1,0 +1,31 @@
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Backend
+apps/backend/bin/
+apps/backend/.DS_Store
+
+# Frontend
+apps/frontend/dist/
+apps/frontend/node_modules/
+apps/frontend/.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Dependencies
+vendor/

@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  @apply border-brand-border;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-brand-bg text-brand-neutral;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  @apply font-serif font-bold;
+}
+
+button {
+  @apply transition-all duration-200;
+}
+
+a {
+  @apply text-brand-primary hover:text-brand-primaryHover;
+}
