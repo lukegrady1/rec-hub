@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(mkdir:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nInitial MVP scaffold with complete project structure\n\n- Backend: Go with Gin, PostgreSQL, Redis, JWT auth\n- Frontend: React + TypeScript + Tailwind + shadcn/ui\n- Database schema with tenants, users, pages, blocks, programs, events, facilities, bookings\n- Auth system with argon2id hashing and JWT tokens\n- Tenant resolver middleware for multi-tenancy\n- Docker Compose setup with Traefik, MinIO, MailHog\n- Migration and seed scripts for demo data\n- Comprehensive README with API documentation\n\n🤖 Generated with Claude Code\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
