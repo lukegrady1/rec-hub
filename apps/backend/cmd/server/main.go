@@ -38,7 +38,7 @@ func main() {
 	router.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-Tenant-Domain")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
 
 		if c.Request.Method == "OPTIONS" {
@@ -94,6 +94,7 @@ func main() {
 			// Blocks
 			blocks := protected.Group("/blocks")
 			{
+				blocks.GET("", h.ListBlocks)
 				blocks.POST("", h.CreateBlock)
 				blocks.PUT("/:id", h.UpdateBlock)
 				blocks.DELETE("/:id", h.DeleteBlock)
@@ -104,6 +105,13 @@ func main() {
 			{
 				media.POST("/presign", h.PresignMediaUpload)
 				media.GET("/:id", h.GetMediaAsset)
+			}
+
+			// Settings
+			settings := protected.Group("/settings")
+			{
+				settings.GET("", h.GetTenantSettings)
+				settings.PUT("", h.UpdateTenantSettings)
 			}
 
 			// Programs
@@ -148,6 +156,14 @@ func main() {
 				bookings.GET("", h.ListBookings)
 				bookings.PUT("/:id", h.UpdateBooking)
 			}
+
+			// Program Registrations
+			registrations := protected.Group("/program-registrations")
+			{
+				registrations.POST("", h.CreateProgramRegistration)
+				registrations.GET("", h.ListProgramRegistrations)
+				registrations.PUT("/:id/status", h.UpdateProgramRegistrationStatus)
+			}
 		}
 
 		// Public routes (no auth required, but with tenant resolver)
@@ -168,6 +184,10 @@ func main() {
 
 			// Public bookings
 			public.POST("/bookings", h.CreatePublicBooking)
+
+			// Public auth (for residents to create accounts)
+			public.POST("/register", h.PublicRegister)
+			public.POST("/login", h.PublicLogin)
 
 			// Sitemap
 			public.GET("/sitemap.xml", h.GetSitemap)

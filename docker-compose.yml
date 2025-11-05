@@ -5,15 +5,15 @@ services:
     image: postgres:14-alpine
     container_name: rec-postgres
     environment:
-      POSTGRES_USER: recuser
-      POSTGRES_PASSWORD: recpass
-      POSTGRES_DB: rec
+      POSTGRES_USER: ${POSTGRES_USER:-recuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-recpass}
+      POSTGRES_DB: ${POSTGRES_DB:-rec}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U recuser -d rec"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-recuser} -d ${POSTGRES_DB:-rec}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -35,8 +35,8 @@ services:
     image: minio/minio:latest
     container_name: rec-minio
     environment:
-      MINIO_ROOT_USER: minio
-      MINIO_ROOT_PASSWORD: minio123
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio123}
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -79,18 +79,18 @@ services:
       dockerfile: Dockerfile
     container_name: rec-backend
     environment:
-      POSTGRES_URL: "postgres://recuser:recpass@postgres:5432/rec?sslmode=disable"
-      REDIS_URL: "redis://redis:6379"
-      MINIO_ENDPOINT: "http://minio:9000"
-      MINIO_ACCESS_KEY: "minio"
-      MINIO_SECRET_KEY: "minio123"
-      JWT_SECRET: "dev-secret-change-in-production-32bytes!!"
-      SMTP_HOST: "mailhog"
-      SMTP_PORT: "1025"
-      FROM_EMAIL: "no-reply@rechub.app"
-      PUBLIC_BASE_DOMAIN: "local.rechub"
-      GIN_MODE: "debug"
-      PORT: "8000"
+      POSTGRES_URL: ${POSTGRES_URL:-postgres://recuser:recpass@postgres:5432/rec?sslmode=disable}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minio}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minio123}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-in-production-32bytes!!}
+      SMTP_HOST: ${SMTP_HOST:-mailhog}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      FROM_EMAIL: ${FROM_EMAIL:-no-reply@rechub.app}
+      PUBLIC_BASE_DOMAIN: ${PUBLIC_BASE_DOMAIN:-local.rechub}
+      GIN_MODE: ${GIN_MODE:-debug}
+      PORT: ${PORT:-8000}
     ports:
       - "8000:8000"
     depends_on:
@@ -111,9 +111,15 @@ services:
       dockerfile: Dockerfile
     container_name: rec-frontend
     environment:
-      VITE_API_BASE_URL: "http://api.local.rechub"
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000/api}
     ports:
       - "5173:5173"
+    volumes:
+      - ./apps/frontend/src:/app/src
+      - ./apps/frontend/public:/app/public
+      - ./apps/frontend/index.html:/app/index.html
+      - ./apps/frontend/tailwind.config.ts:/app/tailwind.config.ts
+      - ./apps/frontend/vite.config.ts:/app/vite.config.ts
     depends_on:
       - backend
     labels:

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -15,7 +15,7 @@ import (
 type BlockRequest struct {
 	PageID uuid.UUID              `json:"page_id" binding:"required"`
 	Kind   string                 `json:"kind" binding:"required"`
-	Order  int                    `json:"order" binding:"required"`
+	Order  int                    `json:"order"`
 	Config map[string]interface{} `json:"config"`
 }
 
@@ -27,6 +27,82 @@ type BlockResponse struct {
 	Config    map[string]interface{} `json:"config"`
 	CreatedAt string                 `json:"created_at"`
 	UpdatedAt string                 `json:"updated_at"`
+}
+
+// ListBlocks returns all blocks for a page
+func (h *Handler) ListBlocks(c *gin.Context) {
+	claims := middleware.GetClaimsFromContext(c)
+	if claims == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	pageID := c.Query("page_id")
+	if pageID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "page_id is required"})
+		return
+	}
+
+	ctx := context.Background()
+
+	// Verify page belongs to tenant
+	var tenantID string
+	err := h.DB.QueryRow(ctx,
+		`SELECT tenant_id FROM pages WHERE id = $1`,
+		pageID).Scan(&tenantID)
+	if err == pgx.ErrNoRows {
+		c.JSON(http.StatusNotFound, gin.H{"error": "page not found"})
+		return
+	}
+	if tenantID != claims.TenantID.String() {
+		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		return
+	}
+
+	// Get blocks
+	rows, err := h.DB.Query(ctx,
+		`SELECT id, page_id, kind, "order", config, created_at, updated_at
+		 FROM page_blocks WHERE page_id = $1 ORDER BY "order" ASC`,
+		pageID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+		return
+	}
+	defer rows.Close()
+
+	var blocks []BlockResponse
+	for rows.Next() {
+		var id, pageID, kind string
+		var order int
+		var config []byte
+		var createdAt, updatedAt time.Time
+
+		if err := rows.Scan(&id, &pageID, &kind, &order, &config, &createdAt, &updatedAt); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "scan error"})
+			return
+		}
+
+		var configMap map[string]interface{}
+		if err := json.Unmarshal(config, &configMap); err != nil {
+			configMap = make(map[string]interface{})
+		}
+
+		blocks = append(blocks, BlockResponse{
+			ID:        id,
+			PageID:    pageID,
+			Kind:      kind,
+			Order:     order,
+			Config:    configMap,
+			CreatedAt: createdAt.Format(time.RFC3339),
+			UpdatedAt: updatedAt.Format(time.RFC3339),
+		})
+	}
+
+	if blocks == nil {
+		blocks = []BlockResponse{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"blocks": blocks})
 }
 
 // CreateBlock creates a new page block

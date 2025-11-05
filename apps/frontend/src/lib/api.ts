@@ -13,16 +13,27 @@ export function initializeAPI(token?: string) {
     },
   })
 
-  // Add token if available
-  if (token) {
-    apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`
-  }
+  // Add request interceptor to include token from localStorage
+  apiClient.interceptors.request.use(
+    (config) => {
+      // Get token from localStorage
+      const token = localStorage.getItem('token')
+      if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`
+      }
 
-  // Add tenant domain header for multi-tenancy
-  const host = window.location.host
-  if (!host.includes('api.')) {
-    apiClient.defaults.headers.common['X-Tenant-Domain'] = host
-  }
+      // Add tenant domain header for multi-tenancy
+      const host = window.location.host
+      if (!host.includes('api.')) {
+        config.headers['X-Tenant-Domain'] = host
+      }
+
+      return config
+    },
+    (error) => {
+      return Promise.reject(error)
+    }
+  )
 
   return apiClient
 }
@@ -92,6 +103,11 @@ export const pagesAPI = {
 
 // Blocks API
 export const blocksAPI = {
+  list: async (pageId: string) => {
+    const { data } = await getAPI().get(`/blocks?page_id=${pageId}`)
+    return data
+  },
+
   create: async (pageId: string, kind: string, order: number, config: Record<string, any>) => {
     const { data } = await getAPI().post('/blocks', {
       page_id: pageId,
@@ -124,6 +140,23 @@ export const mediaAPI = {
 
   get: async (id: string) => {
     const { data } = await getAPI().get(`/media/${id}`)
+    return data
+  },
+}
+
+// Settings API
+export const settingsAPI = {
+  get: async () => {
+    const { data } = await getAPI().get('/settings')
+    return data
+  },
+
+  update: async (branding: any, theme: any, config: any) => {
+    const { data } = await getAPI().put('/settings', {
+      branding,
+      theme,
+      config,
+    })
     return data
   },
 }
@@ -192,6 +225,26 @@ export const facilitiesAPI = {
   delete: async (id: string) => {
     await getAPI().delete(`/facilities/${id}`)
   },
+
+  // Slot management methods
+  listSlots: async (facilityId: string) => {
+    const { data } = await getAPI().get(`/facility-slots?facility_id=${facilityId}`)
+    return data
+  },
+
+  createSlot: async (facilityId: string, slotData: any) => {
+    const { data } = await getAPI().post('/facility-slots', {
+      facility_id: facilityId,
+      starts_at: slotData.starts_at,
+      ends_at: slotData.ends_at,
+      status: slotData.status || 'open',
+    })
+    return data
+  },
+
+  deleteSlot: async (slotId: string) => {
+    await getAPI().delete(`/facility-slots/${slotId}`)
+  },
 }
 
 // Facility Slots API
@@ -224,12 +277,17 @@ export const slotsAPI = {
 // Bookings API
 export const bookingsAPI = {
   list: async () => {
-    const { data } = await getAPI().get('/bookings')
+    const { data} = await getAPI().get('/bookings')
     return data
   },
 
-  update: async (id: string, status: string) => {
-    const { data } = await getAPI().put(`/bookings/${id}`, { status })
+  create: async (bookingData: any) => {
+    const { data } = await getAPI().post('/bookings', bookingData)
+    return data
+  },
+
+  update: async (id: string, updates: any) => {
+    const { data } = await getAPI().put(`/bookings/${id}`, updates)
     return data
   },
 

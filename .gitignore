@@ -2,6 +2,7 @@
 .env
 .env.local
 .env.*.local
+apps/frontend/.env.local
 
 # Backend
 apps/backend/bin/
@@ -29,3 +30,11 @@ logs/
 
 # Dependencies
 vendor/
+
+# Documentation (generated/temporary)
+*.md
+!README.md
+!CLAUDE.md
+
+# Claude settings
+.claude/settings.local.json
