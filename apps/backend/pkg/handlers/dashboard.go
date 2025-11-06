@@ -187,7 +187,7 @@ func (h *Handler) GetDashboardUpcomingEvents(c *gin.Context) {
 		`SELECT
 			e.id, e.title, e.starts_at, e.ends_at, e.location,
 			COALESCE(e.capacity, 0) as capacity,
-			COALESCE((SELECT COUNT(*) FROM program_registrations pr WHERE pr.event_id = e.id), 0) as registered
+			0 as registered
 		FROM events e
 		WHERE e.tenant_id = $1
 		AND e.starts_at >= $2
