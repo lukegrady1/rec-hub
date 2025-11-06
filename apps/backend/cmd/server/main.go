@@ -169,7 +169,7 @@ func main() {
 			dashboard := protected.Group("/admin/dashboard")
 			{
 				dashboard.GET("/summary", h.GetDashboardSummary)
-				dashboard.GET("/upcoming-events", h.GetUpcomingEvents)
+				dashboard.GET("/upcoming-events", h.GetDashboardUpcomingEvents)
 				dashboard.GET("/recent-bookings", h.GetRecentBookings)
 				dashboard.GET("/utilization-series", h.GetUtilizationSeries)
 			}

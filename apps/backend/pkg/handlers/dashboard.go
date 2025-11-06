@@ -7,17 +7,17 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
+	"github.com/rec-hub/backend/pkg/middleware"
 )
 
 // Dashboard summary response
 type DashboardSummary struct {
-	ActivePrograms    int                  `json:"activePrograms"`
-	UpcomingEvents7d  int                  `json:"upcomingEvents7d"`
-	PendingBookings   int                  `json:"pendingBookings"`
-	RegistrationsMTD  int                  `json:"registrationsMTD"`
-	Utilization7dPct  float64              `json:"utilization7dPct"`
-	Payments          PaymentsInfo         `json:"payments"`
+	ActivePrograms    int          `json:"activePrograms"`
+	UpcomingEvents7d  int          `json:"upcomingEvents7d"`
+	PendingBookings   int          `json:"pendingBookings"`
+	RegistrationsMTD  int          `json:"registrationsMTD"`
+	Utilization7dPct  float64      `json:"utilization7dPct"`
+	Payments          PaymentsInfo `json:"payments"`
 }
 
 type PaymentsInfo struct {
@@ -26,14 +26,14 @@ type PaymentsInfo struct {
 }
 
 // Upcoming event response
-type UpcomingEvent struct {
-	ID           string    `json:"id"`
-	Title        string    `json:"title"`
-	StartsAt     time.Time `json:"startsAt"`
-	EndsAt       time.Time `json:"endsAt"`
-	Capacity     int       `json:"capacity"`
-	Registered   int       `json:"registered"`
-	Location     string    `json:"location"`
+type DashboardUpcomingEvent struct {
+	ID         string    `json:"id"`
+	Title      string    `json:"title"`
+	StartsAt   time.Time `json:"startsAt"`
+	EndsAt     time.Time `json:"endsAt"`
+	Capacity   int       `json:"capacity"`
+	Registered int       `json:"registered"`
+	Location   string    `json:"location"`
 }
 
 // Recent booking response
@@ -60,13 +60,13 @@ type UtilizationPoint struct {
 
 // Onboarding checklist
 type OnboardingChecklist struct {
-	TenantID         string    `json:"tenantId"`
-	LogoUploaded     bool      `json:"logoUploaded"`
-	HomepagePublished bool     `json:"homepagePublished"`
-	FirstProgram     bool      `json:"firstProgram"`
-	FirstFacility    bool      `json:"firstFacility"`
-	FirstBooking     bool      `json:"firstBooking"`
-	UpdatedAt        time.Time `json:"updatedAt"`
+	TenantID          string    `json:"tenantId"`
+	LogoUploaded      bool      `json:"logoUploaded"`
+	HomepagePublished bool      `json:"homepagePublished"`
+	FirstProgram      bool      `json:"firstProgram"`
+	FirstFacility     bool      `json:"firstFacility"`
+	FirstBooking      bool      `json:"firstBooking"`
+	UpdatedAt         time.Time `json:"updatedAt"`
 }
 
 type OnboardingUpdateRequest struct {
@@ -79,12 +79,13 @@ type OnboardingUpdateRequest struct {
 
 // GetDashboardSummary returns aggregated KPIs for the dashboard
 func (h *Handler) GetDashboardSummary(c *gin.Context) {
-	tenantID := c.GetString("tenant_id")
-	if tenantID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "tenant required"})
+	claims := middleware.GetClaimsFromContext(c)
+	if claims == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
+	tenantID := claims.TenantID.String()
 	ctx := context.Background()
 	now := time.Now()
 	weekAgo := now.AddDate(0, 0, -7)
@@ -99,7 +100,7 @@ func (h *Handler) GetDashboardSummary(c *gin.Context) {
 
 	// Active programs count
 	var activePrograms int
-	err := h.DB.QueryRowContext(ctx,
+	err := h.DB.QueryRow(ctx,
 		`SELECT COUNT(*) FROM programs WHERE tenant_id = $1 AND status = 'active'`,
 		tenantID).Scan(&activePrograms)
 	if err == nil {
@@ -108,7 +109,7 @@ func (h *Handler) GetDashboardSummary(c *gin.Context) {
 
 	// Upcoming events (next 7 days)
 	var upcomingEvents int
-	err = h.DB.QueryRowContext(ctx,
+	err = h.DB.QueryRow(ctx,
 		`SELECT COUNT(*) FROM events WHERE tenant_id = $1 AND starts_at >= $2 AND starts_at <= $3`,
 		tenantID, now, now.AddDate(0, 0, 7)).Scan(&upcomingEvents)
 	if err == nil {
@@ -117,7 +118,7 @@ func (h *Handler) GetDashboardSummary(c *gin.Context) {
 
 	// Pending bookings
 	var pendingBookings int
-	err = h.DB.QueryRowContext(ctx,
+	err = h.DB.QueryRow(ctx,
 		`SELECT COUNT(*) FROM bookings WHERE tenant_id = $1 AND status = 'pending'`,
 		tenantID).Scan(&pendingBookings)
 	if err == nil {
@@ -126,7 +127,7 @@ func (h *Handler) GetDashboardSummary(c *gin.Context) {
 
 	// Registrations MTD (month-to-date)
 	var registrationsMTD int
-	err = h.DB.QueryRowContext(ctx,
+	err = h.DB.QueryRow(ctx,
 		`SELECT COUNT(*) FROM program_registrations WHERE tenant_id = $1 AND created_at >= $2`,
 		tenantID, monthStart).Scan(&registrationsMTD)
 	if err == nil {
@@ -134,13 +135,12 @@ func (h *Handler) GetDashboardSummary(c *gin.Context) {
 	}
 
 	// Facility utilization (7 days)
-	// Calculate: (booked_slot_minutes / total_slot_minutes_open) * 100
 	var bookedMinutes, totalMinutes float64
 
-	// Get total available minutes from slots in the past 7 days
-	err = h.DB.QueryRowContext(ctx,
+	// Get total available minutes
+	err = h.DB.QueryRow(ctx,
 		`SELECT
-			COALESCE(SUM(EXTRACT(EPOCH FROM (LEAST(ends_at, $3) - GREATEST(starts_at, $2))) / 60), 0) as total_minutes
+			COALESCE(SUM(EXTRACT(EPOCH FROM (LEAST(ends_at, $3) - GREATEST(starts_at, $2))) / 60), 0)
 		FROM facility_slots fs
 		JOIN facilities f ON fs.facility_id = f.id
 		WHERE f.tenant_id = $1
@@ -151,9 +151,9 @@ func (h *Handler) GetDashboardSummary(c *gin.Context) {
 
 	if err == nil && totalMinutes > 0 {
 		// Get booked minutes
-		err = h.DB.QueryRowContext(ctx,
+		err = h.DB.QueryRow(ctx,
 			`SELECT
-				COALESCE(SUM(EXTRACT(EPOCH FROM (LEAST(ends_at, $3) - GREATEST(starts_at, $2))) / 60), 0) as booked_minutes
+				COALESCE(SUM(EXTRACT(EPOCH FROM (LEAST(ends_at, $3) - GREATEST(starts_at, $2))) / 60), 0)
 			FROM facility_slots fs
 			JOIN facilities f ON fs.facility_id = f.id
 			WHERE f.tenant_id = $1
@@ -170,19 +170,20 @@ func (h *Handler) GetDashboardSummary(c *gin.Context) {
 	c.JSON(http.StatusOK, summary)
 }
 
-// GetUpcomingEvents returns events in the next 7 days
-func (h *Handler) GetUpcomingEvents(c *gin.Context) {
-	tenantID := c.GetString("tenant_id")
-	if tenantID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "tenant required"})
+// GetDashboardUpcomingEvents returns events in the next 7 days (renamed to avoid conflict)
+func (h *Handler) GetDashboardUpcomingEvents(c *gin.Context) {
+	claims := middleware.GetClaimsFromContext(c)
+	if claims == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
+	tenantID := claims.TenantID.String()
 	ctx := context.Background()
 	now := time.Now()
 	weekFromNow := now.AddDate(0, 0, 7)
 
-	rows, err := h.DB.QueryContext(ctx,
+	rows, err := h.DB.Query(ctx,
 		`SELECT
 			e.id, e.title, e.starts_at, e.ends_at, e.location,
 			COALESCE(e.capacity, 0) as capacity,
@@ -201,9 +202,9 @@ func (h *Handler) GetUpcomingEvents(c *gin.Context) {
 	}
 	defer rows.Close()
 
-	events := []UpcomingEvent{}
+	events := []DashboardUpcomingEvent{}
 	for rows.Next() {
-		var e UpcomingEvent
+		var e DashboardUpcomingEvent
 		var location *string
 		err := rows.Scan(&e.ID, &e.Title, &e.StartsAt, &e.EndsAt, &location, &e.Capacity, &e.Registered)
 		if err != nil {
@@ -220,22 +221,23 @@ func (h *Handler) GetUpcomingEvents(c *gin.Context) {
 
 // GetRecentBookings returns the most recent booking requests
 func (h *Handler) GetRecentBookings(c *gin.Context) {
-	tenantID := c.GetString("tenant_id")
-	if tenantID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "tenant required"})
+	claims := middleware.GetClaimsFromContext(c)
+	if claims == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
+	tenantID := claims.TenantID.String()
 	ctx := context.Background()
 
-	rows, err := h.DB.QueryContext(ctx,
+	rows, err := h.DB.Query(ctx,
 		`SELECT
 			b.id, b.created_at, b.requester_name, b.requester_email, b.status,
 			f.name as facility_name,
 			fs.starts_at as slot_starts_at,
 			fs.ends_at as slot_ends_at
 		FROM bookings b
-		LEFT JOIN facility_slots fs ON b.resource_id = fs.id AND b.resource_type = 'facility_slot'
+		LEFT JOIN facility_slots fs ON b.resource_id::text = fs.id::text AND b.resource_type = 'facility_slot'
 		LEFT JOIN facilities f ON fs.facility_id = f.id
 		WHERE b.tenant_id = $1
 		ORDER BY b.created_at DESC
@@ -281,12 +283,13 @@ func (h *Handler) GetRecentBookings(c *gin.Context) {
 
 // GetUtilizationSeries returns facility utilization for the past 8 weeks
 func (h *Handler) GetUtilizationSeries(c *gin.Context) {
-	tenantID := c.GetString("tenant_id")
-	if tenantID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "tenant required"})
+	claims := middleware.GetClaimsFromContext(c)
+	if claims == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
+	tenantID := claims.TenantID.String()
 	ctx := context.Background()
 	now := time.Now()
 
@@ -300,7 +303,7 @@ func (h *Handler) GetUtilizationSeries(c *gin.Context) {
 		var bookedMinutes, totalMinutes float64
 
 		// Total minutes
-		err := h.DB.QueryRowContext(ctx,
+		err := h.DB.QueryRow(ctx,
 			`SELECT
 				COALESCE(SUM(EXTRACT(EPOCH FROM (LEAST(ends_at, $3) - GREATEST(starts_at, $2))) / 60), 0)
 			FROM facility_slots fs
@@ -314,7 +317,7 @@ func (h *Handler) GetUtilizationSeries(c *gin.Context) {
 		pct := 0.0
 		if err == nil && totalMinutes > 0 {
 			// Booked minutes
-			err = h.DB.QueryRowContext(ctx,
+			err = h.DB.QueryRow(ctx,
 				`SELECT
 					COALESCE(SUM(EXTRACT(EPOCH FROM (LEAST(ends_at, $3) - GREATEST(starts_at, $2))) / 60), 0)
 				FROM facility_slots fs
@@ -341,12 +344,13 @@ func (h *Handler) GetUtilizationSeries(c *gin.Context) {
 
 // GetOnboarding returns the onboarding checklist state
 func (h *Handler) GetOnboarding(c *gin.Context) {
-	tenantID := c.GetString("tenant_id")
-	if tenantID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "tenant required"})
+	claims := middleware.GetClaimsFromContext(c)
+	if claims == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
+	tenantID := claims.TenantID.String()
 	ctx := context.Background()
 
 	checklist := OnboardingChecklist{
@@ -356,47 +360,47 @@ func (h *Handler) GetOnboarding(c *gin.Context) {
 	// Check if onboarding record exists
 	var onboardingData string
 	var updatedAt time.Time
-	err := h.DB.QueryRowContext(ctx,
+	err := h.DB.QueryRow(ctx,
 		`SELECT onboarding_data, updated_at FROM tenants WHERE id = $1`,
 		tenantID).Scan(&onboardingData, &updatedAt)
 
-	if err == nil && onboardingData != "" {
+	if err == nil && onboardingData != "" && onboardingData != "{}" {
 		// Parse existing onboarding data
 		json.Unmarshal([]byte(onboardingData), &checklist)
 		checklist.UpdatedAt = updatedAt
 	} else {
 		// Auto-check based on existing data
-		// Check logo uploaded (if branding settings exist)
-		var logoURL string
-		h.DB.QueryRowContext(ctx,
+		// Check logo uploaded
+		var logoURL *string
+		h.DB.QueryRow(ctx,
 			`SELECT branding->>'logoUrl' FROM tenant_settings WHERE tenant_id = $1`,
 			tenantID).Scan(&logoURL)
-		checklist.LogoUploaded = logoURL != ""
+		checklist.LogoUploaded = logoURL != nil && *logoURL != ""
 
 		// Check homepage published
 		var publishedCount int
-		h.DB.QueryRowContext(ctx,
+		h.DB.QueryRow(ctx,
 			`SELECT COUNT(*) FROM pages WHERE tenant_id = $1 AND slug = 'home' AND published = true`,
 			tenantID).Scan(&publishedCount)
 		checklist.HomepagePublished = publishedCount > 0
 
 		// Check first program
 		var programCount int
-		h.DB.QueryRowContext(ctx,
+		h.DB.QueryRow(ctx,
 			`SELECT COUNT(*) FROM programs WHERE tenant_id = $1`,
 			tenantID).Scan(&programCount)
 		checklist.FirstProgram = programCount > 0
 
 		// Check first facility
 		var facilityCount int
-		h.DB.QueryRowContext(ctx,
+		h.DB.QueryRow(ctx,
 			`SELECT COUNT(*) FROM facilities WHERE tenant_id = $1`,
 			tenantID).Scan(&facilityCount)
 		checklist.FirstFacility = facilityCount > 0
 
 		// Check first booking
 		var bookingCount int
-		h.DB.QueryRowContext(ctx,
+		h.DB.QueryRow(ctx,
 			`SELECT COUNT(*) FROM bookings WHERE tenant_id = $1`,
 			tenantID).Scan(&bookingCount)
 		checklist.FirstBooking = bookingCount > 0
@@ -409,11 +413,13 @@ func (h *Handler) GetOnboarding(c *gin.Context) {
 
 // UpdateOnboarding updates the onboarding checklist
 func (h *Handler) UpdateOnboarding(c *gin.Context) {
-	tenantID := c.GetString("tenant_id")
-	if tenantID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "tenant required"})
+	claims := middleware.GetClaimsFromContext(c)
+	if claims == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
+
+	tenantID := claims.TenantID.String()
 
 	var req OnboardingUpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -425,12 +431,12 @@ func (h *Handler) UpdateOnboarding(c *gin.Context) {
 
 	// Get current state
 	var currentData string
-	h.DB.QueryRowContext(ctx,
+	h.DB.QueryRow(ctx,
 		`SELECT onboarding_data FROM tenants WHERE id = $1`,
 		tenantID).Scan(&currentData)
 
 	checklist := OnboardingChecklist{}
-	if currentData != "" {
+	if currentData != "" && currentData != "{}" {
 		json.Unmarshal([]byte(currentData), &checklist)
 	}
 
@@ -455,7 +461,7 @@ func (h *Handler) UpdateOnboarding(c *gin.Context) {
 
 	// Save to database
 	data, _ := json.Marshal(checklist)
-	_, err := h.DB.ExecContext(ctx,
+	_, err := h.DB.Exec(ctx,
 		`UPDATE tenants SET onboarding_data = $1, updated_at = $2 WHERE id = $3`,
 		string(data), checklist.UpdatedAt, tenantID)
 
