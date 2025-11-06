@@ -164,6 +164,22 @@ func main() {
 				registrations.GET("", h.ListProgramRegistrations)
 				registrations.PUT("/:id/status", h.UpdateProgramRegistrationStatus)
 			}
+
+			// Dashboard (admin only)
+			dashboard := protected.Group("/admin/dashboard")
+			{
+				dashboard.GET("/summary", h.GetDashboardSummary)
+				dashboard.GET("/upcoming-events", h.GetUpcomingEvents)
+				dashboard.GET("/recent-bookings", h.GetRecentBookings)
+				dashboard.GET("/utilization-series", h.GetUtilizationSeries)
+			}
+
+			// Onboarding
+			onboarding := protected.Group("/admin/onboarding")
+			{
+				onboarding.GET("", h.GetOnboarding)
+				onboarding.PUT("", h.UpdateOnboarding)
+			}
 		}
 
 		// Public routes (no auth required, but with tenant resolver)
