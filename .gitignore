@@ -35,6 +35,10 @@ vendor/
 *.md
 !README.md
 !CLAUDE.md
+!docs/**/*.md
+
+# Workflow state
+.github-workflow-state.json
 
 # Claude settings
 .claude/settings.local.json

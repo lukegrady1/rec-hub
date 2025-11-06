@@ -1,7 +1,11 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
 
-// Public Pages
+// Marketing Pages (for admin-facing SaaS landing)
+import Landing from './marketing/Landing'
+import PricingPage from './marketing/PricingPage'
+
+// Public Pages (for residents on tenant subdomains)
 import Home from './public/Home'
 import Programs from './public/Programs'
 import Events from './public/Events'
@@ -34,8 +38,16 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
         <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<Home />} />
+          {/* Marketing routes (admin-facing SaaS landing) */}
+          <Route path="/" element={<Landing />} />
+          <Route path="/pricing" element={<PricingPage />} />
+
+          {/* Auth routes */}
+          <Route path="/auth/login" element={<Login />} />
+          <Route path="/auth/register" element={<Register />} />
+
+          {/* Public routes (resident-facing on tenant subdomains) */}
+          <Route path="/home" element={<Home />} />
           <Route path="/programs" element={<Programs />} />
           <Route path="/events" element={<Events />} />
           <Route path="/facilities" element={<Facilities />} />
@@ -43,10 +55,6 @@ function App() {
           {/* Public auth routes (for residents) */}
           <Route path="/signup" element={<Signup />} />
           <Route path="/signin" element={<Signin />} />
-
-          {/* Admin auth routes */}
-          <Route path="/admin/login" element={<Login />} />
-          <Route path="/admin/register" element={<Register />} />
 
           {/* Admin routes */}
           <Route path="/admin" element={<AdminDashboard />} />

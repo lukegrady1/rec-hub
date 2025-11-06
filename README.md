@@ -35,6 +35,26 @@ After startup, you'll have:
 - **Password**: DemoPass123!
 - **Access at**: http://demo.local.rechub
 
+## GitHub Issue Workflow
+
+Automated workflow for managing issues and pull requests. See [docs/GITHUB_WORKFLOW.md](docs/GITHUB_WORKFLOW.md) for full documentation.
+
+**Quick usage:**
+```bash
+# List open issues
+./scripts/github-workflow.sh list
+
+# Start working on issue #42
+./scripts/github-workflow.sh start 42
+
+# After making changes and committing
+./scripts/github-workflow.sh pr
+```
+
+**Windows users:** Use `.\scripts\github-workflow.ps1` instead.
+
+**Prerequisites:** Install [GitHub CLI](https://cli.github.com/) or set `GITHUB_TOKEN` environment variable.
+
 ## Architecture
 
 ### Tech Stack
