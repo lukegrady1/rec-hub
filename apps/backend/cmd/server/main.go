@@ -180,6 +180,14 @@ func main() {
 				onboarding.GET("", h.GetOnboarding)
 				onboarding.PUT("", h.UpdateOnboarding)
 			}
+
+			// Website Builder
+			website := protected.Group("/website")
+			{
+				website.GET("/config", h.GetWebsiteConfig)
+				website.PUT("/config", h.UpdateWebsiteConfig)
+				website.POST("/publish", h.PublishWebsite)
+			}
 		}
 
 		// Public routes (no auth required, but with tenant resolver)
@@ -204,6 +212,9 @@ func main() {
 			// Public auth (for residents to create accounts)
 			public.POST("/register", h.PublicRegister)
 			public.POST("/login", h.PublicLogin)
+
+			// Public website config
+			public.GET("/config", h.GetPublicWebsiteConfig)
 
 			// Sitemap
 			public.GET("/sitemap.xml", h.GetSitemap)
