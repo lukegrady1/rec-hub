@@ -209,12 +209,36 @@ func (h *Handler) DeleteProgram(c *gin.Context) {
 // ============ Events ============
 
 type EventRequest struct {
-	Title       string `json:"title" binding:"required"`
-	Description *string `json:"description"`
-	StartsAt    time.Time `json:"starts_at" binding:"required"`
-	EndsAt      time.Time `json:"ends_at" binding:"required"`
-	Location    *string `json:"location"`
-	Capacity    *int     `json:"capacity"`
+	Title           string    `json:"title" binding:"required"`
+	Description     *string   `json:"description"`
+	StartsAt        time.Time `json:"starts_at" binding:"required"`
+	EndsAt          time.Time `json:"ends_at" binding:"required"`
+	Location        *string   `json:"location"`
+	Capacity        *int      `json:"capacity"`
+	Category        *string   `json:"category"`
+	Status          *string   `json:"status"`
+	Visibility      *bool     `json:"visibility"`
+	ImageURL        *string   `json:"image_url"`
+	Slug            *string   `json:"slug"`
+	RegisteredCount *int      `json:"registered_count"`
+}
+
+type EventResponse struct {
+	ID              string  `json:"id"`
+	Title           string  `json:"title"`
+	Description     *string `json:"description"`
+	StartsAt        string  `json:"starts_at"`
+	EndsAt          string  `json:"ends_at"`
+	Location        *string `json:"location"`
+	Capacity        *int    `json:"capacity"`
+	Category        *string `json:"category"`
+	Status          string  `json:"status"`
+	Visibility      bool    `json:"visibility"`
+	ImageURL        *string `json:"image_url"`
+	Slug            *string `json:"slug"`
+	RegisteredCount int     `json:"registered_count"`
+	CreatedAt       string  `json:"created_at"`
+	UpdatedAt       string  `json:"updated_at"`
 }
 
 func (h *Handler) ListEvents(c *gin.Context) {
@@ -226,7 +250,7 @@ func (h *Handler) ListEvents(c *gin.Context) {
 
 	ctx := context.Background()
 	rows, err := h.DB.Query(ctx,
-		`SELECT id, title, description, starts_at, ends_at, location, capacity, created_at, updated_at
+		`SELECT id, title, description, starts_at, ends_at, location, capacity, category, status, visibility, image_url, slug, registered_count, created_at, updated_at
 		 FROM events WHERE tenant_id = $1 ORDER BY starts_at DESC`,
 		claims.TenantID.String())
 	if err != nil {
@@ -235,20 +259,37 @@ func (h *Handler) ListEvents(c *gin.Context) {
 	}
 	defer rows.Close()
 
-	var events []interface{}
+	var events []EventResponse
 	for rows.Next() {
-		var e models.Event
-		if err := rows.Scan(&e.ID, &e.Title, &e.Description, &e.StartsAt, &e.EndsAt, &e.Location, &e.Capacity, &e.CreatedAt, &e.UpdatedAt); err != nil {
+		var e EventResponse
+		var desc, location, category, imageURL, slug *string
+		var capacity *int
+		var id string
+		var status string
+		var visibility bool
+		var registeredCount int
+		var startsAt, endsAt, createdAt, updatedAt time.Time
+
+		if err := rows.Scan(&id, &e.Title, &desc, &startsAt, &endsAt, &location, &capacity, &category, &status, &visibility, &imageURL, &slug, &registeredCount, &createdAt, &updatedAt); err != nil {
 			continue
 		}
-		events = append(events, gin.H{
-			"id":          e.ID.String(),
-			"title":       e.Title,
-			"description": e.Description,
-			"starts_at":   e.StartsAt,
-			"ends_at":     e.EndsAt,
-			"location":    e.Location,
-			"capacity":    e.Capacity,
+
+		events = append(events, EventResponse{
+			ID:              id,
+			Title:           e.Title,
+			Description:     desc,
+			StartsAt:        startsAt.Format(time.RFC3339),
+			EndsAt:          endsAt.Format(time.RFC3339),
+			Location:        location,
+			Capacity:        capacity,
+			Category:        category,
+			Status:          status,
+			Visibility:      visibility,
+			ImageURL:        imageURL,
+			Slug:            slug,
+			RegisteredCount: registeredCount,
+			CreatedAt:       createdAt.Format(time.RFC3339),
+			UpdatedAt:       updatedAt.Format(time.RFC3339),
 		})
 	}
 
@@ -271,10 +312,24 @@ func (h *Handler) CreateEvent(c *gin.Context) {
 	ctx := context.Background()
 	eventID := uuid.New()
 
+	// Default values
+	status := "active"
+	if req.Status != nil {
+		status = *req.Status
+	}
+	visibility := true
+	if req.Visibility != nil {
+		visibility = *req.Visibility
+	}
+	registeredCount := 0
+	if req.RegisteredCount != nil {
+		registeredCount = *req.RegisteredCount
+	}
+
 	_, err := h.DB.Exec(ctx,
-		`INSERT INTO events (id, tenant_id, title, description, starts_at, ends_at, location, capacity)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-		eventID, claims.TenantID, req.Title, req.Description, req.StartsAt, req.EndsAt, req.Location, req.Capacity)
+		`INSERT INTO events (id, tenant_id, title, description, starts_at, ends_at, location, capacity, category, status, visibility, image_url, slug, registered_count)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+		eventID, claims.TenantID, req.Title, req.Description, req.StartsAt, req.EndsAt, req.Location, req.Capacity, req.Category, status, visibility, req.ImageURL, req.Slug, registeredCount)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create event"})
 		return
@@ -311,10 +366,25 @@ func (h *Handler) UpdateEvent(c *gin.Context) {
 		return
 	}
 
+	// Default values
+	status := "active"
+	if req.Status != nil {
+		status = *req.Status
+	}
+	visibility := true
+	if req.Visibility != nil {
+		visibility = *req.Visibility
+	}
+	registeredCount := 0
+	if req.RegisteredCount != nil {
+		registeredCount = *req.RegisteredCount
+	}
+
 	_, err = h.DB.Exec(ctx,
-		`UPDATE events SET title = $1, description = $2, starts_at = $3, ends_at = $4, location = $5, capacity = $6, updated_at = now()
-		 WHERE id = $7`,
-		req.Title, req.Description, req.StartsAt, req.EndsAt, req.Location, req.Capacity, eventID)
+		`UPDATE events SET title = $1, description = $2, starts_at = $3, ends_at = $4, location = $5, capacity = $6,
+		                   category = $7, status = $8, visibility = $9, image_url = $10, slug = $11, registered_count = $12, updated_at = now()
+		 WHERE id = $13`,
+		req.Title, req.Description, req.StartsAt, req.EndsAt, req.Location, req.Capacity, req.Category, status, visibility, req.ImageURL, req.Slug, registeredCount, eventID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "update failed"})
 		return
