@@ -26,6 +26,7 @@ import AdminBookings from './admin/Bookings'
 import AdminProgramRegistrations from './admin/ProgramRegistrations'
 import AdminTheme from './admin/Theme'
 import AdminSettings from './admin/Settings'
+import WebsiteBuilder from './admin/WebsiteBuilder'
 
 // Auth
 import Login from './auth/Login'
@@ -65,7 +66,7 @@ function App() {
           <Route path="/admin/bookings" element={<AdminBookings />} />
           <Route path="/admin/registrations" element={<AdminProgramRegistrations />} />
           <Route path="/admin/program-registrations" element={<AdminProgramRegistrations />} />
-          <Route path="/admin/website" element={<AdminPages />} />
+          <Route path="/admin/website" element={<WebsiteBuilder />} />
           <Route path="/admin/pages" element={<AdminPages />} />
           <Route path="/admin/pages/:pageId/editor" element={<PageEditor />} />
           <Route path="/admin/pages/:pageId/preview" element={<PagePreview />} />
