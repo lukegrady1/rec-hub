@@ -15,21 +15,32 @@ import (
 // ============ Programs ============
 
 type ProgramRequest struct {
-	Title       string `json:"title" binding:"required"`
+	Title       string  `json:"title" binding:"required"`
 	Description *string `json:"description"`
 	Season      *string `json:"season"`
+	Category    *string `json:"category"`
+	StartDate   *string `json:"start_date"`
+	EndDate     *string `json:"end_date"`
 	PriceCents  int     `json:"price_cents"`
+	Status      *string `json:"status"`
+	ImageURL    *string `json:"image_url"`
+	Slug        *string `json:"slug"`
 }
 
 type ProgramResponse struct {
-	ID          string `json:"id"`
-	Title       string `json:"title"`
+	ID          string  `json:"id"`
+	Title       string  `json:"title"`
 	Description *string `json:"description"`
 	Season      *string `json:"season"`
-	PriceCents  int    `json:"price_cents"`
-	Status      string `json:"status"`
-	CreatedAt   string `json:"created_at"`
-	UpdatedAt   string `json:"updated_at"`
+	Category    *string `json:"category"`
+	StartDate   *string `json:"start_date"`
+	EndDate     *string `json:"end_date"`
+	PriceCents  int     `json:"price_cents"`
+	Status      string  `json:"status"`
+	ImageURL    *string `json:"image_url"`
+	Slug        *string `json:"slug"`
+	CreatedAt   string  `json:"created_at"`
+	UpdatedAt   string  `json:"updated_at"`
 }
 
 func (h *Handler) ListPrograms(c *gin.Context) {
@@ -41,8 +52,8 @@ func (h *Handler) ListPrograms(c *gin.Context) {
 
 	ctx := context.Background()
 	rows, err := h.DB.Query(ctx,
-		`SELECT id, title, description, season, price_cents, status, created_at, updated_at
-		 FROM programs WHERE tenant_id = $1 AND status = 'active' ORDER BY created_at DESC`,
+		`SELECT id, title, description, season, category, start_date, end_date, price_cents, status, image_url, slug, created_at, updated_at
+		 FROM programs WHERE tenant_id = $1 ORDER BY created_at DESC`,
 		claims.TenantID.String())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
@@ -52,19 +63,31 @@ func (h *Handler) ListPrograms(c *gin.Context) {
 
 	var programs []ProgramResponse
 	for rows.Next() {
-		var p models.Program
-		if err := rows.Scan(&p.ID, &p.Title, &p.Description, &p.Season, &p.PriceCents, &p.Status, &p.CreatedAt, &p.UpdatedAt); err != nil {
+		var p ProgramResponse
+		var desc, season, category, startDate, endDate, imageURL, slug *string
+		var id string
+		var priceCents int
+		var status string
+		var createdAt, updatedAt time.Time
+
+		if err := rows.Scan(&id, &p.Title, &desc, &season, &category, &startDate, &endDate, &priceCents, &status, &imageURL, &slug, &createdAt, &updatedAt); err != nil {
 			continue
 		}
+
 		programs = append(programs, ProgramResponse{
-			ID:          p.ID.String(),
+			ID:          id,
 			Title:       p.Title,
-			Description: p.Description,
-			Season:      p.Season,
-			PriceCents:  p.PriceCents,
-			Status:      p.Status,
-			CreatedAt:   p.CreatedAt.String(),
-			UpdatedAt:   p.UpdatedAt.String(),
+			Description: desc,
+			Season:      season,
+			Category:    category,
+			StartDate:   startDate,
+			EndDate:     endDate,
+			PriceCents:  priceCents,
+			Status:      status,
+			ImageURL:    imageURL,
+			Slug:        slug,
+			CreatedAt:   createdAt.Format(time.RFC3339),
+			UpdatedAt:   updatedAt.Format(time.RFC3339),
 		})
 	}
 
@@ -87,10 +110,16 @@ func (h *Handler) CreateProgram(c *gin.Context) {
 	ctx := context.Background()
 	programID := uuid.New()
 
+	// Default status to 'active' if not provided
+	status := "active"
+	if req.Status != nil {
+		status = *req.Status
+	}
+
 	_, err := h.DB.Exec(ctx,
-		`INSERT INTO programs (id, tenant_id, title, description, season, price_cents, status)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-		programID, claims.TenantID, req.Title, req.Description, req.Season, req.PriceCents, "active")
+		`INSERT INTO programs (id, tenant_id, title, description, season, category, start_date, end_date, price_cents, status, image_url, slug)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+		programID, claims.TenantID, req.Title, req.Description, req.Season, req.Category, req.StartDate, req.EndDate, req.PriceCents, status, req.ImageURL, req.Slug)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create program"})
 		return
@@ -127,10 +156,17 @@ func (h *Handler) UpdateProgram(c *gin.Context) {
 		return
 	}
 
+	// Get current status if not provided
+	status := "active"
+	if req.Status != nil {
+		status = *req.Status
+	}
+
 	_, err = h.DB.Exec(ctx,
-		`UPDATE programs SET title = $1, description = $2, season = $3, price_cents = $4, updated_at = now()
-		 WHERE id = $5`,
-		req.Title, req.Description, req.Season, req.PriceCents, programID)
+		`UPDATE programs SET title = $1, description = $2, season = $3, category = $4, start_date = $5, end_date = $6,
+		                     price_cents = $7, status = $8, image_url = $9, slug = $10, updated_at = now()
+		 WHERE id = $11`,
+		req.Title, req.Description, req.Season, req.Category, req.StartDate, req.EndDate, req.PriceCents, status, req.ImageURL, req.Slug, programID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "update failed"})
 		return
