@@ -58,16 +58,20 @@ function App() {
 
           {/* Admin routes */}
           <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/pages" element={<AdminPages />} />
-          <Route path="/admin/pages/:pageId/editor" element={<PageEditor />} />
-          <Route path="/admin/pages/:pageId/preview" element={<PagePreview />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/programs" element={<AdminPrograms />} />
           <Route path="/admin/events" element={<AdminEvents />} />
           <Route path="/admin/facilities" element={<AdminFacilities />} />
           <Route path="/admin/bookings" element={<AdminBookings />} />
+          <Route path="/admin/registrations" element={<AdminProgramRegistrations />} />
           <Route path="/admin/program-registrations" element={<AdminProgramRegistrations />} />
+          <Route path="/admin/website" element={<AdminPages />} />
+          <Route path="/admin/pages" element={<AdminPages />} />
+          <Route path="/admin/pages/:pageId/editor" element={<PageEditor />} />
+          <Route path="/admin/pages/:pageId/preview" element={<PagePreview />} />
           <Route path="/admin/theme" element={<AdminTheme />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
+          <Route path="/admin/help" element={<AdminSettings />} />
 
           {/* Dynamic pages - catch-all route (must be last) */}
           <Route path="/:slug" element={<DynamicPage />} />
