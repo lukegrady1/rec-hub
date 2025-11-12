@@ -187,6 +187,8 @@ func main() {
 				website.GET("/config", h.GetWebsiteConfig)
 				website.PUT("/config", h.UpdateWebsiteConfig)
 				website.POST("/publish", h.PublishWebsite)
+				website.GET("/preview-config", h.GetWebsitePreviewConfig)
+				website.GET("/preview-data", h.GetWebsitePreviewData)
 			}
 		}
 

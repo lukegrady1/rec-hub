@@ -292,3 +292,145 @@ func getDefaultWebsiteConfig() WebsiteConfig {
 		Published: false,
 	}
 }
+
+// GetWebsitePreviewConfig returns the website config for preview mode (doesn't require published)
+func (h *Handler) GetWebsitePreviewConfig(c *gin.Context) {
+	claims := middleware.GetClaimsFromContext(c)
+	if claims == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	tenantID := claims.TenantID.String()
+	ctx := context.Background()
+
+	// Get website config
+	var configJSON []byte
+	err := h.DB.QueryRow(ctx,
+		`SELECT config FROM tenant_settings WHERE tenant_id = $1`,
+		tenantID).Scan(&configJSON)
+
+	if err != nil {
+		c.JSON(http.StatusOK, getDefaultWebsiteConfig())
+		return
+	}
+
+	var config map[string]interface{}
+	if err := json.Unmarshal(configJSON, &config); err != nil {
+		c.JSON(http.StatusOK, getDefaultWebsiteConfig())
+		return
+	}
+
+	websiteConfig := getWebsiteConfigOrDefaults(config)
+
+	c.JSON(http.StatusOK, websiteConfig)
+}
+
+// GetWebsitePreviewData returns combined data for preview (programs, events, facilities)
+func (h *Handler) GetWebsitePreviewData(c *gin.Context) {
+	claims := middleware.GetClaimsFromContext(c)
+	if claims == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	tenantID := claims.TenantID.String()
+	ctx := context.Background()
+
+	// Fetch programs
+	programRows, err := h.DB.Query(ctx,
+		`SELECT id, title, description, season, category, start_date, end_date, price_cents, status
+		 FROM programs WHERE tenant_id = $1 AND status = 'active' ORDER BY created_at DESC LIMIT 6`,
+		tenantID)
+
+	var programs []map[string]interface{}
+	if err == nil {
+		defer programRows.Close()
+		for programRows.Next() {
+			var id, title string
+			var desc, season, category, startDate, endDate *string
+			var priceCents int
+			var status string
+
+			if err := programRows.Scan(&id, &title, &desc, &season, &category, &startDate, &endDate, &priceCents, &status); err == nil {
+				programs = append(programs, map[string]interface{}{
+					"id":          id,
+					"title":       title,
+					"description": desc,
+					"season":      season,
+					"category":    category,
+					"start_date":  startDate,
+					"end_date":    endDate,
+					"price_cents": priceCents,
+					"status":      status,
+				})
+			}
+		}
+	}
+
+	// Fetch events
+	eventRows, err := h.DB.Query(ctx,
+		`SELECT id, title, description, starts_at, ends_at, location, capacity, category, status, visibility
+		 FROM events WHERE tenant_id = $1 AND status = 'active' AND visibility = true
+		 ORDER BY starts_at ASC LIMIT 6`,
+		tenantID)
+
+	var events []map[string]interface{}
+	if err == nil {
+		defer eventRows.Close()
+		for eventRows.Next() {
+			var id, title string
+			var desc, location, category *string
+			var capacity *int
+			var status string
+			var visibility bool
+			var startsAt, endsAt time.Time
+
+			if err := eventRows.Scan(&id, &title, &desc, &startsAt, &endsAt, &location, &capacity, &category, &status, &visibility); err == nil {
+				events = append(events, map[string]interface{}{
+					"id":          id,
+					"title":       title,
+					"description": desc,
+					"starts_at":   startsAt.Format(time.RFC3339),
+					"ends_at":     endsAt.Format(time.RFC3339),
+					"location":    location,
+					"capacity":    capacity,
+					"category":    category,
+					"status":      status,
+					"visibility":  visibility,
+				})
+			}
+		}
+	}
+
+	// Fetch facilities
+	facilityRows, err := h.DB.Query(ctx,
+		`SELECT id, name, type, address, rules
+		 FROM facilities WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT 6`,
+		tenantID)
+
+	var facilities []map[string]interface{}
+	if err == nil {
+		defer facilityRows.Close()
+		for facilityRows.Next() {
+			var id, name, facilityType string
+			var address, rules *string
+
+			if err := facilityRows.Scan(&id, &name, &facilityType, &address, &rules); err == nil {
+				facilities = append(facilities, map[string]interface{}{
+					"id":      id,
+					"name":    name,
+					"type":    facilityType,
+					"address": address,
+					"rules":   rules,
+				})
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"programs":   programs,
+		"events":     events,
+		"facilities": facilities,
+	})
+}

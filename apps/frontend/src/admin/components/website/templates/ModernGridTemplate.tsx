@@ -1,10 +1,17 @@
 import { WebsiteConfig } from '../../../WebsiteBuilder'
 
-interface TemplateProps {
-  config: WebsiteConfig
+interface PreviewData {
+  programs?: any[]
+  events?: any[]
+  facilities?: any[]
 }
 
-export default function ModernGridTemplate({ config }: TemplateProps) {
+interface TemplateProps {
+  config: WebsiteConfig
+  previewData?: PreviewData
+}
+
+export default function ModernGridTemplate({ config, previewData }: TemplateProps) {
   const enabledPagesList = Object.entries(config.enabledPages)
     .filter(([_, enabled]) => enabled)
     .map(([page]) => page)
@@ -58,17 +65,34 @@ export default function ModernGridTemplate({ config }: TemplateProps) {
           <section className="mb-20">
             <h3 className="text-4xl font-black mb-10 text-gray-900">Programs</h3>
             <div className="grid md:grid-cols-3 gap-8">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="group cursor-pointer">
-                  <div className="aspect-square bg-gradient-to-br from-purple-400 to-pink-500 rounded-3xl mb-4 overflow-hidden group-hover:scale-105 transition-transform">
-                    <div className="w-full h-full flex items-center justify-center text-6xl">
-                      {['⚽', '🏀', '🏊', '🎨', '🎭', '🎸'][i - 1]}
+              {previewData?.programs && previewData.programs.length > 0 ? (
+                previewData.programs.slice(0, 6).map((program, index) => (
+                  <div key={program.id} className="group cursor-pointer">
+                    <div className="aspect-square bg-gradient-to-br from-purple-400 to-pink-500 rounded-3xl mb-4 overflow-hidden group-hover:scale-105 transition-transform">
+                      <div className="w-full h-full flex items-center justify-center text-6xl">
+                        {['⚽', '🏀', '🏊', '🎨', '🎭', '🎸'][index % 6]}
+                      </div>
                     </div>
+                    <h4 className="text-xl font-bold mb-2 text-gray-900">{program.title}</h4>
+                    <p className="text-gray-600">{program.description || 'Engage in this exciting program'}</p>
+                    {program.price_cents > 0 && (
+                      <p className="text-emerald-600 font-bold mt-2">${(program.price_cents / 100).toFixed(2)}</p>
+                    )}
                   </div>
-                  <h4 className="text-xl font-bold mb-2 text-gray-900">Activity {i}</h4>
-                  <p className="text-gray-600">Engage in this exciting program</p>
-                </div>
-              ))}
+                ))
+              ) : (
+                [1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="group cursor-pointer">
+                    <div className="aspect-square bg-gradient-to-br from-purple-400 to-pink-500 rounded-3xl mb-4 overflow-hidden group-hover:scale-105 transition-transform">
+                      <div className="w-full h-full flex items-center justify-center text-6xl">
+                        {['⚽', '🏀', '🏊', '🎨', '🎭', '🎸'][i - 1]}
+                      </div>
+                    </div>
+                    <h4 className="text-xl font-bold mb-2 text-gray-900">Activity {i}</h4>
+                    <p className="text-gray-600">Engage in this exciting program</p>
+                  </div>
+                ))
+              )}
             </div>
           </section>
         )}
@@ -77,21 +101,45 @@ export default function ModernGridTemplate({ config }: TemplateProps) {
           <section className="mb-20">
             <h3 className="text-4xl font-black mb-10 text-gray-900">Events</h3>
             <div className="grid md:grid-cols-2 gap-6">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-8 hover:shadow-xl transition-shadow border-l-8 border-orange-500">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <div className="text-sm font-bold text-orange-600 mb-2">NOV 15, 2025</div>
-                      <h4 className="text-2xl font-black text-gray-900">Event Title {i}</h4>
+              {previewData?.events && previewData.events.length > 0 ? (
+                previewData.events.slice(0, 4).map((event) => {
+                  const eventDate = event.starts_at ? new Date(event.starts_at) : new Date()
+                  const dateStr = eventDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()
+
+                  return (
+                    <div key={event.id} className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-8 hover:shadow-xl transition-shadow border-l-8 border-orange-500">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <div className="text-sm font-bold text-orange-600 mb-2">{dateStr}</div>
+                          <h4 className="text-2xl font-black text-gray-900">{event.title}</h4>
+                        </div>
+                        <div className="bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-bold">
+                          {event.capacity ? `${event.capacity} spots` : 'FREE'}
+                        </div>
+                      </div>
+                      <p className="text-gray-700 mb-4">{event.description || 'Join us for an amazing community gathering...'}</p>
+                      {event.location && <p className="text-sm text-gray-600 mb-4">📍 {event.location}</p>}
+                      <a href="#" className="font-bold text-orange-600 hover:text-orange-700">Register Now →</a>
                     </div>
-                    <div className="bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-bold">
-                      FREE
+                  )
+                })
+              ) : (
+                [1, 2, 3, 4].map((i) => (
+                  <div key={i} className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-8 hover:shadow-xl transition-shadow border-l-8 border-orange-500">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <div className="text-sm font-bold text-orange-600 mb-2">NOV 15, 2025</div>
+                        <h4 className="text-2xl font-black text-gray-900">Event Title {i}</h4>
+                      </div>
+                      <div className="bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-bold">
+                        FREE
+                      </div>
                     </div>
+                    <p className="text-gray-700 mb-4">Join us for an amazing community gathering...</p>
+                    <a href="#" className="font-bold text-orange-600 hover:text-orange-700">Register Now →</a>
                   </div>
-                  <p className="text-gray-700 mb-4">Join us for an amazing community gathering...</p>
-                  <a href="#" className="font-bold text-orange-600 hover:text-orange-700">Register Now →</a>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </section>
         )}

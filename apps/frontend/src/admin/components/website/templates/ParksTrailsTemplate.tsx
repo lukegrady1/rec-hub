@@ -1,10 +1,17 @@
 import { WebsiteConfig } from '../../../WebsiteBuilder'
 
-interface TemplateProps {
-  config: WebsiteConfig
+interface PreviewData {
+  programs?: any[]
+  events?: any[]
+  facilities?: any[]
 }
 
-export default function ParksTrailsTemplate({ config }: TemplateProps) {
+interface TemplateProps {
+  config: WebsiteConfig
+  previewData?: PreviewData
+}
+
+export default function ParksTrailsTemplate({ config, previewData }: TemplateProps) {
   const enabledPagesList = Object.entries(config.enabledPages)
     .filter(([_, enabled]) => enabled)
     .map(([page]) => page)

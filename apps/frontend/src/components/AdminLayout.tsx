@@ -1,6 +1,21 @@
 import { ReactNode, useState, useEffect } from 'react'
 import { settingsAPI } from '../lib/api'
-import AdminSidebar from '../admin/components/AdminSidebar'
+import { Sidebar, SidebarBody, SidebarLink } from './ui/sidebar'
+import {
+  LayoutDashboard,
+  Calendar,
+  CalendarDays,
+  Building2,
+  ClipboardList,
+  UserCheck,
+  Globe,
+  Settings,
+  HelpCircle,
+  LogOut,
+} from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { cn } from '../lib/utils'
 
 interface AdminLayoutProps {
   children: ReactNode
@@ -21,6 +36,7 @@ interface TenantSettings {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [settings, setSettings] = useState<TenantSettings>({})
   const [loading, setLoading] = useState(true)
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
     fetchSettings()
@@ -37,16 +53,158 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
   }
 
-  const tenantName = settings.branding?.departmentName || settings.config?.departmentName || 'Recreation Department'
+  const tenantName = settings.branding?.departmentName || settings.config?.departmentName || 'Rec Hub'
+
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    window.location.href = '/'
+  }
+
+  const links = [
+    {
+      label: 'Dashboard',
+      href: '/admin/dashboard',
+      icon: (
+        <LayoutDashboard className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: 'Programs',
+      href: '/admin/programs',
+      icon: (
+        <Calendar className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: 'Events',
+      href: '/admin/events',
+      icon: (
+        <CalendarDays className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: 'Facilities',
+      href: '/admin/facilities',
+      icon: (
+        <Building2 className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: 'Bookings',
+      href: '/admin/bookings',
+      icon: (
+        <ClipboardList className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: 'Registrations',
+      href: '/admin/registrations',
+      icon: (
+        <UserCheck className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: 'Website',
+      href: '/admin/website',
+      icon: (
+        <Globe className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+  ]
+
+  const bottomLinks = [
+    {
+      label: 'Settings',
+      href: '/admin/settings',
+      icon: (
+        <Settings className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: 'Help',
+      href: '/admin/help',
+      icon: (
+        <HelpCircle className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+  ]
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      <AdminSidebar tenantName={tenantName} />
-      <main className="flex-1 overflow-x-hidden">
+    <div
+      className={cn(
+        "flex flex-col md:flex-row bg-gray-100 dark:bg-neutral-800 w-full flex-1 mx-auto overflow-hidden",
+        "h-screen"
+      )}
+    >
+      <Sidebar open={open} setOpen={setOpen}>
+        <SidebarBody className="justify-between gap-10">
+          <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+            {open ? <Logo tenantName={tenantName} /> : <LogoIcon tenantName={tenantName} />}
+            <div className="mt-8 flex flex-col gap-2">
+              {links.map((link, idx) => (
+                <SidebarLink key={idx} link={link} />
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="mt-4 flex flex-col gap-2 border-t border-neutral-200 dark:border-neutral-700 pt-4">
+              {bottomLinks.map((link, idx) => (
+                <SidebarLink key={idx} link={link} />
+              ))}
+              <button
+                onClick={handleLogout}
+                className="flex items-center justify-start gap-2 group/sidebar py-2 text-red-600 hover:text-red-700"
+              >
+                <LogOut className="h-5 w-5 flex-shrink-0" />
+                <motion.span
+                  animate={{
+                    display: open ? "inline-block" : "none",
+                    opacity: open ? 1 : 0,
+                  }}
+                  className="text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0"
+                >
+                  Logout
+                </motion.span>
+              </button>
+            </div>
+          </div>
+        </SidebarBody>
+      </Sidebar>
+      <main className="flex-1 overflow-auto bg-white dark:bg-neutral-900">
         <div className="container mx-auto px-4 md:px-6 py-6 md:py-8 max-w-7xl">
           {children}
         </div>
       </main>
     </div>
+  )
+}
+
+export const Logo = ({ tenantName }: { tenantName: string }) => {
+  return (
+    <Link
+      to="/admin/dashboard"
+      className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
+    >
+      <div className="h-5 w-6 bg-brand-primary dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
+      <motion.span
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="font-medium text-black dark:text-white whitespace-pre"
+      >
+        {tenantName}
+      </motion.span>
+    </Link>
+  )
+}
+
+export const LogoIcon = ({ tenantName }: { tenantName: string }) => {
+  return (
+    <Link
+      to="/admin/dashboard"
+      className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
+      title={tenantName}
+    >
+      <div className="h-5 w-6 bg-brand-primary dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
+    </Link>
   )
 }

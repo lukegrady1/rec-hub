@@ -13,6 +13,7 @@ import Facilities from './public/Facilities'
 import DynamicPage from './public/DynamicPage'
 import Signup from './public/Signup'
 import Signin from './public/Signin'
+import PublicPreview from './public/Preview'
 
 // Admin
 import AdminDashboard from './admin/Dashboard'
@@ -27,6 +28,7 @@ import AdminProgramRegistrations from './admin/ProgramRegistrations'
 import AdminTheme from './admin/Theme'
 import AdminSettings from './admin/Settings'
 import WebsiteBuilder from './admin/WebsiteBuilder'
+import Preview from './admin/Preview'
 
 // Auth
 import Login from './auth/Login'
@@ -48,6 +50,7 @@ function App() {
           <Route path="/auth/register" element={<Register />} />
 
           {/* Public routes (resident-facing on tenant subdomains) */}
+          <Route path="/preview" element={<PublicPreview />} />
           <Route path="/home" element={<Home />} />
           <Route path="/programs" element={<Programs />} />
           <Route path="/events" element={<Events />} />
@@ -67,6 +70,7 @@ function App() {
           <Route path="/admin/registrations" element={<AdminProgramRegistrations />} />
           <Route path="/admin/program-registrations" element={<AdminProgramRegistrations />} />
           <Route path="/admin/website" element={<WebsiteBuilder />} />
+          <Route path="/admin/preview" element={<Preview />} />
           <Route path="/admin/pages" element={<AdminPages />} />
           <Route path="/admin/pages/:pageId/editor" element={<PageEditor />} />
           <Route path="/admin/pages/:pageId/preview" element={<PagePreview />} />
