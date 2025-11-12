@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getAPI } from '../lib/api'
+import PreviewLayout from './PreviewLayout'
 import TemplatePreview from '../admin/components/website/TemplatePreview'
 import { WebsiteConfig } from '../admin/WebsiteBuilder'
 
@@ -9,7 +10,7 @@ interface PreviewData {
   facilities: any[]
 }
 
-export default function Preview() {
+export default function PreviewHome() {
   const [config, setConfig] = useState<WebsiteConfig | null>(null)
   const [previewData, setPreviewData] = useState<PreviewData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -36,24 +37,32 @@ export default function Preview() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-4"></div>
-          <p className="text-brand-muted">Loading preview...</p>
+      <PreviewLayout config={config}>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-4"></div>
+            <p className="text-brand-muted">Loading preview...</p>
+          </div>
         </div>
-      </div>
+      </PreviewLayout>
     )
   }
 
   if (!config || !previewData) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="text-center">
-          <p className="text-red-600">Failed to load preview</p>
+      <PreviewLayout config={config}>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <p className="text-red-600">Failed to load preview</p>
+          </div>
         </div>
-      </div>
+      </PreviewLayout>
     )
   }
 
-  return <TemplatePreview config={config} previewData={previewData} />
+  return (
+    <PreviewLayout config={config}>
+      <TemplatePreview config={config} previewData={previewData} hideHeader={true} />
+    </PreviewLayout>
+  )
 }

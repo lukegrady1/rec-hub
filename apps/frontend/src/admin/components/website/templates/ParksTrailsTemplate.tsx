@@ -9,9 +9,10 @@ interface PreviewData {
 interface TemplateProps {
   config: WebsiteConfig
   previewData?: PreviewData
+  hideHeader?: boolean
 }
 
-export default function ParksTrailsTemplate({ config, previewData }: TemplateProps) {
+export default function ParksTrailsTemplate({ config, previewData, hideHeader = false }: TemplateProps) {
   const enabledPagesList = Object.entries(config.enabledPages)
     .filter(([_, enabled]) => enabled)
     .map(([page]) => page)
@@ -19,27 +20,29 @@ export default function ParksTrailsTemplate({ config, previewData }: TemplatePro
   return (
     <div className="min-h-screen bg-green-50">
       {/* Header */}
-      <header className="bg-gradient-to-r from-green-800 to-green-700 text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="text-3xl">🌲</div>
-              <div>
-                <h1 className="text-2xl font-bold">Parks & Recreation</h1>
-                <p className="text-sm text-green-200">Connecting with nature</p>
+      {!hideHeader && (
+        <header className="bg-gradient-to-r from-green-800 to-green-700 text-white shadow-lg">
+          <div className="max-w-7xl mx-auto px-4 py-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="text-3xl">🌲</div>
+                <div>
+                  <h1 className="text-2xl font-bold">Parks & Recreation</h1>
+                  <p className="text-sm text-green-200">Connecting with nature</p>
+                </div>
               </div>
+              <nav className="hidden md:flex items-center gap-6">
+                <a href="#" className="text-white hover:text-green-200 transition-colors font-medium">Home</a>
+                {enabledPagesList.map((page) => (
+                  <a key={page} href="#" className="text-white hover:text-green-200 transition-colors font-medium capitalize">
+                    {page}
+                  </a>
+                ))}
+              </nav>
             </div>
-            <nav className="hidden md:flex items-center gap-6">
-              <a href="#" className="text-white hover:text-green-200 transition-colors font-medium">Home</a>
-              {enabledPagesList.map((page) => (
-                <a key={page} href="#" className="text-white hover:text-green-200 transition-colors font-medium capitalize">
-                  {page}
-                </a>
-              ))}
-            </nav>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* Hero Section */}
       <section className="relative bg-gradient-to-b from-green-600 to-green-800 text-white py-24 overflow-hidden">

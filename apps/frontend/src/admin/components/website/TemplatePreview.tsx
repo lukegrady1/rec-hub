@@ -12,19 +12,20 @@ interface PreviewData {
 interface TemplatePreviewProps {
   config: WebsiteConfig
   previewData?: PreviewData
+  hideHeader?: boolean
 }
 
-export default function TemplatePreview({ config, previewData }: TemplatePreviewProps) {
+export default function TemplatePreview({ config, previewData, hideHeader = false }: TemplatePreviewProps) {
   const renderTemplate = () => {
     switch (config.template) {
       case 'classic_civic':
-        return <ClassicCivicTemplate config={config} previewData={previewData} />
+        return <ClassicCivicTemplate config={config} previewData={previewData} hideHeader={hideHeader} />
       case 'modern_grid':
-        return <ModernGridTemplate config={config} previewData={previewData} />
+        return <ModernGridTemplate config={config} previewData={previewData} hideHeader={hideHeader} />
       case 'parks_trails':
-        return <ParksTrailsTemplate config={config} previewData={previewData} />
+        return <ParksTrailsTemplate config={config} previewData={previewData} hideHeader={hideHeader} />
       default:
-        return <ClassicCivicTemplate config={config} previewData={previewData} />
+        return <ClassicCivicTemplate config={config} previewData={previewData} hideHeader={hideHeader} />
     }
   }
 

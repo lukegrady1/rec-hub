@@ -9,9 +9,10 @@ interface PreviewData {
 interface TemplateProps {
   config: WebsiteConfig
   previewData?: PreviewData
+  hideHeader?: boolean
 }
 
-export default function ModernGridTemplate({ config, previewData }: TemplateProps) {
+export default function ModernGridTemplate({ config, previewData, hideHeader = false }: TemplateProps) {
   const enabledPagesList = Object.entries(config.enabledPages)
     .filter(([_, enabled]) => enabled)
     .map(([page]) => page)
@@ -19,21 +20,23 @@ export default function ModernGridTemplate({ config, previewData }: TemplateProp
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-black text-white">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-black tracking-tight">REC</h1>
-            <nav className="hidden md:flex items-center gap-8">
-              <a href="#" className="font-semibold hover:text-emerald-400 transition-colors">Home</a>
-              {enabledPagesList.map((page) => (
-                <a key={page} href="#" className="font-semibold hover:text-emerald-400 transition-colors capitalize">
-                  {page}
-                </a>
-              ))}
-            </nav>
+      {!hideHeader && (
+        <header className="bg-black text-white">
+          <div className="max-w-7xl mx-auto px-4 py-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-3xl font-black tracking-tight">REC</h1>
+              <nav className="hidden md:flex items-center gap-8">
+                <a href="#" className="font-semibold hover:text-emerald-400 transition-colors">Home</a>
+                {enabledPagesList.map((page) => (
+                  <a key={page} href="#" className="font-semibold hover:text-emerald-400 transition-colors capitalize">
+                    {page}
+                  </a>
+                ))}
+              </nav>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-emerald-500 to-teal-600 text-white py-32 overflow-hidden">

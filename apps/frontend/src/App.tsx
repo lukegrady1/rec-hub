@@ -13,7 +13,10 @@ import Facilities from './public/Facilities'
 import DynamicPage from './public/DynamicPage'
 import Signup from './public/Signup'
 import Signin from './public/Signin'
-import PublicPreview from './public/Preview'
+import PreviewHome from './public/PreviewHome'
+import PreviewPrograms from './public/PreviewPrograms'
+import PreviewEvents from './public/PreviewEvents'
+import PreviewFacilities from './public/PreviewFacilities'
 
 // Admin
 import AdminDashboard from './admin/Dashboard'
@@ -50,7 +53,10 @@ function App() {
           <Route path="/auth/register" element={<Register />} />
 
           {/* Public routes (resident-facing on tenant subdomains) */}
-          <Route path="/preview" element={<PublicPreview />} />
+          <Route path="/preview" element={<PreviewHome />} />
+          <Route path="/preview/programs" element={<PreviewPrograms />} />
+          <Route path="/preview/events" element={<PreviewEvents />} />
+          <Route path="/preview/facilities" element={<PreviewFacilities />} />
           <Route path="/home" element={<Home />} />
           <Route path="/programs" element={<Programs />} />
           <Route path="/events" element={<Events />} />

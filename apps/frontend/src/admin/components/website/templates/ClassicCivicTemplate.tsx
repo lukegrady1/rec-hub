@@ -9,9 +9,10 @@ interface PreviewData {
 interface TemplateProps {
   config: WebsiteConfig
   previewData?: PreviewData
+  hideHeader?: boolean
 }
 
-export default function ClassicCivicTemplate({ config, previewData }: TemplateProps) {
+export default function ClassicCivicTemplate({ config, previewData, hideHeader = false }: TemplateProps) {
   const enabledPagesList = Object.entries(config.enabledPages)
     .filter(([_, enabled]) => enabled)
     .map(([page]) => page)
@@ -19,24 +20,26 @@ export default function ClassicCivicTemplate({ config, previewData }: TemplatePr
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b-4 border-blue-600 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Recreation Department</h1>
-              <p className="text-sm text-gray-600">City Services</p>
+      {!hideHeader && (
+        <header className="bg-white border-b-4 border-blue-600 shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Recreation Department</h1>
+                <p className="text-sm text-gray-600">City Services</p>
+              </div>
+              <nav className="hidden md:flex items-center gap-6">
+                <a href="#" className="text-gray-700 hover:text-blue-600 font-medium">Home</a>
+                {enabledPagesList.map((page) => (
+                  <a key={page} href="#" className="text-gray-700 hover:text-blue-600 font-medium capitalize">
+                    {page}
+                  </a>
+                ))}
+              </nav>
             </div>
-            <nav className="hidden md:flex items-center gap-6">
-              <a href="#" className="text-gray-700 hover:text-blue-600 font-medium">Home</a>
-              {enabledPagesList.map((page) => (
-                <a key={page} href="#" className="text-gray-700 hover:text-blue-600 font-medium capitalize">
-                  {page}
-                </a>
-              ))}
-            </nav>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20">
@@ -162,37 +165,39 @@ export default function ClassicCivicTemplate({ config, previewData }: TemplatePr
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-800 text-white py-8 mt-12">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8 mb-6">
-            <div>
-              <h4 className="font-bold mb-3">Recreation Department</h4>
-              <p className="text-sm text-gray-400">Serving our community with quality programs and facilities</p>
+      {!hideHeader && (
+        <footer className="bg-gray-800 text-white py-8 mt-12">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="grid md:grid-cols-3 gap-8 mb-6">
+              <div>
+                <h4 className="font-bold mb-3">Recreation Department</h4>
+                <p className="text-sm text-gray-400">Serving our community with quality programs and facilities</p>
+              </div>
+              <div>
+                <h4 className="font-bold mb-3">Quick Links</h4>
+                <ul className="space-y-2 text-sm">
+                  {enabledPagesList.slice(0, 4).map((page) => (
+                    <li key={page}>
+                      <a href="#" className="text-gray-400 hover:text-white capitalize">{page}</a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-bold mb-3">Contact</h4>
+                <p className="text-sm text-gray-400">
+                  123 Main Street<br />
+                  City, State 12345<br />
+                  (555) 123-4567
+                </p>
+              </div>
             </div>
-            <div>
-              <h4 className="font-bold mb-3">Quick Links</h4>
-              <ul className="space-y-2 text-sm">
-                {enabledPagesList.slice(0, 4).map((page) => (
-                  <li key={page}>
-                    <a href="#" className="text-gray-400 hover:text-white capitalize">{page}</a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold mb-3">Contact</h4>
-              <p className="text-sm text-gray-400">
-                123 Main Street<br />
-                City, State 12345<br />
-                (555) 123-4567
-              </p>
+            <div className="border-t border-gray-700 pt-6 text-center text-sm text-gray-400">
+              © 2025 Recreation Department. All rights reserved.
             </div>
           </div>
-          <div className="border-t border-gray-700 pt-6 text-center text-sm text-gray-400">
-            © 2025 Recreation Department. All rights reserved.
-          </div>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
   )
 }
