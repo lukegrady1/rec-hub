@@ -152,7 +152,7 @@ export default function Register() {
           <div className="mt-6 text-center">
             <p className="text-sm text-brand-muted">
               Already have an account?{' '}
-              <a href="/admin/login" className="text-brand-primary hover:text-brand-primaryHover font-semibold">
+              <a href="/auth/login" className="text-brand-primary hover:text-brand-primaryHover font-semibold">
                 Sign In
               </a>
             </p>
