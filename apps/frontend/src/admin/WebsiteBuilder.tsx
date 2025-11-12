@@ -4,8 +4,6 @@ import { Settings, Eye, Smartphone, Tablet, Monitor, Save, Globe } from 'lucide-
 import TemplateSelector from './components/website/TemplateSelector'
 import SettingsDrawer from './components/website/SettingsDrawer'
 import TemplatePreview from './components/website/TemplatePreview'
-import PreviewToolbar from '../components/PreviewToolbar'
-import PreviewFrame from '../components/PreviewFrame'
 import { getAPI } from '../lib/api'
 
 export interface WebsiteConfig {
@@ -40,8 +38,6 @@ export default function WebsiteBuilder() {
   const [showSettings, setShowSettings] = useState(false)
   const [deviceSize, setDeviceSize] = useState<DeviceSize>('desktop')
   const [showTemplateSelector, setShowTemplateSelector] = useState(false)
-  const [isPreviewMode, setIsPreviewMode] = useState(false)
-  const [previewData, setPreviewData] = useState<any>(null)
 
   useEffect(() => {
     fetchConfig()
@@ -99,26 +95,12 @@ export default function WebsiteBuilder() {
     setConfig({ ...config, ...updates })
   }
 
-  const handleEnterPreview = async () => {
-    // Save current config before entering preview
+  const handleOpenPreview = async () => {
+    // Save current config before opening preview
     await handleSave()
 
-    // Fetch preview data
-    try {
-      const api = getAPI()
-      const response = await api.get('/website/preview-data')
-      setPreviewData(response.data)
-      setIsPreviewMode(true)
-      window.location.hash = '#/preview'
-    } catch (error) {
-      console.error('Failed to fetch preview data:', error)
-      alert('Failed to load preview')
-    }
-  }
-
-  const handleExitPreview = () => {
-    setIsPreviewMode(false)
-    window.location.hash = ''
+    // Open preview in new tab at /preview (public route)
+    window.open('/preview', '_blank')
   }
 
   const getDeviceWidth = () => {
@@ -149,28 +131,6 @@ export default function WebsiteBuilder() {
           <p className="text-red-600">Failed to load website configuration</p>
         </div>
       </AdminLayout>
-    )
-  }
-
-  // If in preview mode, show preview interface
-  if (isPreviewMode) {
-    return (
-      <div className="fixed inset-0 bg-white z-40">
-        <PreviewToolbar
-          deviceMode={deviceSize}
-          onDeviceChange={setDeviceSize}
-          onReturnToBuilder={handleExitPreview}
-          onPublish={handlePublish}
-          hasChanges={!config?.published}
-        />
-        <div className="pt-16">
-          <PreviewFrame
-            deviceMode={deviceSize}
-            config={config}
-            previewData={previewData}
-          />
-        </div>
-      </div>
     )
   }
 
@@ -239,7 +199,7 @@ export default function WebsiteBuilder() {
               </button>
 
               <button
-                onClick={handleEnterPreview}
+                onClick={handleOpenPreview}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
               >
                 <Eye className="w-4 h-4" />

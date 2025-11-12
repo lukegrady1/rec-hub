@@ -3,21 +3,28 @@ import ClassicCivicTemplate from './templates/ClassicCivicTemplate'
 import ModernGridTemplate from './templates/ModernGridTemplate'
 import ParksTrailsTemplate from './templates/ParksTrailsTemplate'
 
-interface TemplatePreviewProps {
-  config: WebsiteConfig
+interface PreviewData {
+  programs?: any[]
+  events?: any[]
+  facilities?: any[]
 }
 
-export default function TemplatePreview({ config }: TemplatePreviewProps) {
+interface TemplatePreviewProps {
+  config: WebsiteConfig
+  previewData?: PreviewData
+}
+
+export default function TemplatePreview({ config, previewData }: TemplatePreviewProps) {
   const renderTemplate = () => {
     switch (config.template) {
       case 'classic_civic':
-        return <ClassicCivicTemplate config={config} />
+        return <ClassicCivicTemplate config={config} previewData={previewData} />
       case 'modern_grid':
-        return <ModernGridTemplate config={config} />
+        return <ModernGridTemplate config={config} previewData={previewData} />
       case 'parks_trails':
-        return <ParksTrailsTemplate config={config} />
+        return <ParksTrailsTemplate config={config} previewData={previewData} />
       default:
-        return <ClassicCivicTemplate config={config} />
+        return <ClassicCivicTemplate config={config} previewData={previewData} />
     }
   }
 
