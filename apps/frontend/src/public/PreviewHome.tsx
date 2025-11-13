@@ -13,6 +13,7 @@ interface PreviewData {
 export default function PreviewHome() {
   const [config, setConfig] = useState<WebsiteConfig | null>(null)
   const [previewData, setPreviewData] = useState<PreviewData | null>(null)
+  const [tenantName, setTenantName] = useState<string>('Recreation Department')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -26,7 +27,15 @@ export default function PreviewHome() {
         api.get('/website/preview-config'),
         api.get('/website/preview-data')
       ])
-      setConfig(configResponse.data)
+
+      // Handle new response structure
+      if (configResponse.data.config) {
+        setConfig(configResponse.data.config)
+        setTenantName(configResponse.data.tenantName || 'Recreation Department')
+      } else {
+        setConfig(configResponse.data)
+      }
+
       setPreviewData(dataResponse.data)
     } catch (error) {
       console.error('Failed to fetch preview data:', error)
@@ -61,7 +70,7 @@ export default function PreviewHome() {
   }
 
   return (
-    <PreviewLayout config={config}>
+    <PreviewLayout config={config} tenantName={tenantName}>
       <TemplatePreview config={config} previewData={previewData} hideHeader={true} />
     </PreviewLayout>
   )

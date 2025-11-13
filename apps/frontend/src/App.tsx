@@ -17,6 +17,10 @@ import PreviewHome from './public/PreviewHome'
 import PreviewPrograms from './public/PreviewPrograms'
 import PreviewEvents from './public/PreviewEvents'
 import PreviewFacilities from './public/PreviewFacilities'
+import PreviewContact from './public/PreviewContact'
+import PreviewEventDetail from './public/PreviewEventDetail'
+import PreviewProgramDetail from './public/PreviewProgramDetail'
+import PreviewFacilityDetail from './public/PreviewFacilityDetail'
 
 // Admin
 import AdminDashboard from './admin/Dashboard'
@@ -55,8 +59,12 @@ function App() {
           {/* Public routes (resident-facing on tenant subdomains) */}
           <Route path="/preview" element={<PreviewHome />} />
           <Route path="/preview/programs" element={<PreviewPrograms />} />
+          <Route path="/preview/programs/:id" element={<PreviewProgramDetail />} />
           <Route path="/preview/events" element={<PreviewEvents />} />
+          <Route path="/preview/events/:id" element={<PreviewEventDetail />} />
           <Route path="/preview/facilities" element={<PreviewFacilities />} />
+          <Route path="/preview/facilities/:id" element={<PreviewFacilityDetail />} />
+          <Route path="/preview/contact" element={<PreviewContact />} />
           <Route path="/home" element={<Home />} />
           <Route path="/programs" element={<Programs />} />
           <Route path="/events" element={<Events />} />

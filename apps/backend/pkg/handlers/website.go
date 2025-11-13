@@ -287,7 +287,7 @@ func getDefaultWebsiteConfig() WebsiteConfig {
 			Headline:    "Welcome to Our Recreation Department",
 			Subheadline: "Discover programs, events, and facilities in your community",
 			CtaText:     "Explore Programs",
-			CtaLink:     "/programs",
+			CtaLink:     "/preview/programs",
 		},
 		Published: false,
 	}
@@ -304,26 +304,46 @@ func (h *Handler) GetWebsitePreviewConfig(c *gin.Context) {
 	tenantID := claims.TenantID.String()
 	ctx := context.Background()
 
+	// Get tenant name
+	var tenantName string
+	err := h.DB.QueryRow(ctx,
+		`SELECT name FROM tenants WHERE id = $1`,
+		tenantID).Scan(&tenantName)
+	if err != nil {
+		tenantName = "Recreation Department"
+	}
+
 	// Get website config
 	var configJSON []byte
-	err := h.DB.QueryRow(ctx,
+	err = h.DB.QueryRow(ctx,
 		`SELECT config FROM tenant_settings WHERE tenant_id = $1`,
 		tenantID).Scan(&configJSON)
 
 	if err != nil {
-		c.JSON(http.StatusOK, getDefaultWebsiteConfig())
+		defaultConfig := getDefaultWebsiteConfig()
+		c.JSON(http.StatusOK, gin.H{
+			"tenantName": tenantName,
+			"config":     defaultConfig,
+		})
 		return
 	}
 
 	var config map[string]interface{}
 	if err := json.Unmarshal(configJSON, &config); err != nil {
-		c.JSON(http.StatusOK, getDefaultWebsiteConfig())
+		defaultConfig := getDefaultWebsiteConfig()
+		c.JSON(http.StatusOK, gin.H{
+			"tenantName": tenantName,
+			"config":     defaultConfig,
+		})
 		return
 	}
 
 	websiteConfig := getWebsiteConfigOrDefaults(config)
 
-	c.JSON(http.StatusOK, websiteConfig)
+	c.JSON(http.StatusOK, gin.H{
+		"tenantName": tenantName,
+		"config":     websiteConfig,
+	})
 }
 
 // GetWebsitePreviewData returns combined data for preview (programs, events, facilities)

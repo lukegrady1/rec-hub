@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { getAPI } from '../lib/api'
 import PreviewLayout from './PreviewLayout'
+import ModernHero from '../components/ModernHero'
 
 export default function PreviewFacilities() {
   const [facilities, setFacilities] = useState<any[]>([])
@@ -54,18 +56,24 @@ export default function PreviewFacilities() {
 
   return (
     <PreviewLayout config={config}>
+      <ModernHero
+        title="Our Facilities"
+        subtitle="Book & Explore"
+        description="Explore our state-of-the-art recreational facilities available for booking"
+        gradient="from-green-500 via-teal-500 to-emerald-600"
+        pattern="grid"
+      />
+
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Our Facilities</h1>
-          <p className="text-lg text-gray-600">
-            Explore our state-of-the-art recreational facilities available for booking
-          </p>
-        </div>
 
         {facilities.length > 0 ? (
           <div className="grid md:grid-cols-2 gap-8">
             {facilities.map((facility) => (
-              <div key={facility.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+              <Link
+                key={facility.id}
+                to={`/preview/facilities/${facility.id}`}
+                className="block bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+              >
                 <div className="h-64 bg-gradient-to-br from-green-400 to-teal-500 flex items-center justify-center">
                   <div className="text-8xl">{getFacilityIcon(facility.type)}</div>
                 </div>
@@ -89,15 +97,15 @@ export default function PreviewFacilities() {
                   {facility.rules && (
                     <div className="mb-4">
                       <h4 className="font-semibold text-gray-900 mb-2">Facility Rules:</h4>
-                      <p className="text-sm text-gray-600">{facility.rules}</p>
+                      <p className="text-sm text-gray-600 line-clamp-2">{facility.rules}</p>
                     </div>
                   )}
 
-                  <button className="w-full bg-brand-accent text-white py-3 rounded-lg hover:bg-brand-accentHover transition-colors font-semibold">
-                    Book This Facility
-                  </button>
+                  <span className="inline-block w-full bg-brand-accent text-white py-3 rounded-lg hover:bg-brand-accentHover transition-colors font-semibold text-center">
+                    View Details →
+                  </span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         ) : (

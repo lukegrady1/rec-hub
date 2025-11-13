@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { getAPI } from '../lib/api'
 import PreviewLayout from './PreviewLayout'
+import ModernHero from '../components/ModernHero'
 
 export default function PreviewPrograms() {
   const [programs, setPrograms] = useState<any[]>([])
@@ -42,18 +44,24 @@ export default function PreviewPrograms() {
 
   return (
     <PreviewLayout config={config}>
+      <ModernHero
+        title="Our Programs"
+        subtitle="Recreation & Activities"
+        description="Discover exciting recreational programs for all ages and interests"
+        gradient="from-purple-600 via-blue-600 to-indigo-700"
+        pattern="dots"
+      />
+
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Our Programs</h1>
-          <p className="text-lg text-gray-600">
-            Discover exciting recreational programs for all ages and interests
-          </p>
-        </div>
 
         {programs.length > 0 ? (
           <div className="grid md:grid-cols-3 gap-6">
             {programs.map((program) => (
-              <div key={program.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+              <Link
+                key={program.id}
+                to={`/preview/programs/${program.id}`}
+                className="block bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+              >
                 <div className="h-48 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
                   <div className="text-6xl">🏃</div>
                 </div>
@@ -70,11 +78,11 @@ export default function PreviewPrograms() {
                       ${(program.price_cents / 100).toFixed(2)}
                     </p>
                   )}
-                  <button className="w-full bg-brand-primary text-white py-2 rounded-lg hover:bg-brand-primaryHover transition-colors font-semibold">
-                    Register Now
-                  </button>
+                  <span className="inline-block w-full bg-brand-primary text-white py-2 rounded-lg hover:bg-brand-primaryHover transition-colors font-semibold text-center">
+                    View Details →
+                  </span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         ) : (

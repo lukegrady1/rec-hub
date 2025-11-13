@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { getAPI } from '../lib/api'
 import PreviewLayout from './PreviewLayout'
+import ModernHero from '../components/ModernHero'
 
 export default function PreviewEvents() {
   const [events, setEvents] = useState<any[]>([])
@@ -42,13 +44,15 @@ export default function PreviewEvents() {
 
   return (
     <PreviewLayout config={config}>
+      <ModernHero
+        title="Upcoming Events"
+        subtitle="Community Calendar"
+        description="Join us for exciting community events and activities"
+        gradient="from-orange-500 via-red-500 to-pink-600"
+        pattern="waves"
+      />
+
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Upcoming Events</h1>
-          <p className="text-lg text-gray-600">
-            Join us for exciting community events and activities
-          </p>
-        </div>
 
         {events.length > 0 ? (
           <div className="space-y-6">
@@ -60,7 +64,11 @@ export default function PreviewEvents() {
               const time = eventDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 
               return (
-                <div key={event.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                <Link
+                  key={event.id}
+                  to={`/preview/events/${event.id}`}
+                  className="block bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+                >
                   <div className="flex">
                     <div className="bg-gradient-to-br from-orange-500 to-red-500 text-white p-8 flex flex-col items-center justify-center min-w-[140px]">
                       <div className="text-sm font-bold mb-1">{month}</div>
@@ -80,19 +88,19 @@ export default function PreviewEvents() {
                         {time}
                       </p>
                       {event.description && (
-                        <p className="text-gray-700 mb-4">{event.description}</p>
+                        <p className="text-gray-700 mb-4 line-clamp-2">{event.description}</p>
                       )}
                       {event.capacity && (
                         <p className="text-sm text-gray-500 mb-4">
                           Capacity: {event.capacity} people
                         </p>
                       )}
-                      <button className="bg-brand-accent text-white px-6 py-2 rounded-lg hover:bg-brand-accentHover transition-colors font-semibold">
-                        Register for Event
-                      </button>
+                      <span className="inline-block bg-brand-accent text-white px-6 py-2 rounded-lg hover:bg-brand-accentHover transition-colors font-semibold">
+                        View Details →
+                      </span>
                     </div>
                   </div>
-                </div>
+                </Link>
               )
             })}
           </div>

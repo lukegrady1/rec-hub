@@ -4,9 +4,10 @@ import { Link, useLocation } from 'react-router-dom'
 interface PreviewLayoutProps {
   children: ReactNode
   config?: any
+  tenantName?: string
 }
 
-export default function PreviewLayout({ children, config }: PreviewLayoutProps) {
+export default function PreviewLayout({ children, config, tenantName = 'Recreation Department' }: PreviewLayoutProps) {
   const location = useLocation()
 
   const enabledPages = config?.enabledPages || {
@@ -31,7 +32,7 @@ export default function PreviewLayout({ children, config }: PreviewLayoutProps) 
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link to="/preview" className="text-2xl font-bold text-brand-primary">
-              Recreation Department
+              {tenantName}
             </Link>
             <div className="flex gap-6 items-center">
               {navItems.map((item) => (
@@ -60,7 +61,7 @@ export default function PreviewLayout({ children, config }: PreviewLayoutProps) 
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-8 mb-6">
             <div>
-              <h4 className="font-bold mb-3">Recreation Department</h4>
+              <h4 className="font-bold mb-3">{tenantName}</h4>
               <p className="text-sm text-gray-400">Serving our community with quality programs and facilities</p>
             </div>
             <div>
@@ -85,7 +86,7 @@ export default function PreviewLayout({ children, config }: PreviewLayoutProps) 
             </div>
           </div>
           <div className="border-t border-gray-700 pt-6 text-center text-sm text-gray-400">
-            © 2025 Recreation Department. All rights reserved.
+            © 2025 {tenantName}. All rights reserved.
           </div>
         </div>
       </footer>
